@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flash Memory Game</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Memory Game">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2317C3B2'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-family='Arial'%3EMG%3C/text%3E%3C/svg%3E">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f5f5f5;
+        }
+        
+        #levelSelection, #game, #endGame {
+            width: 400px;
+            max-width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .hidden { display: none; }
+        #levelSelection, #game, #endGame { display: none; }
+        
+        .calculator-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            gap: 10px;
+            margin: 20px auto;
+            justify-content: center;
+        }
+        
+        .calculator-buttons button {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #17C3B2;
+            background-color: transparent;
+            text-align: center;
+            font-size: 24px;
+            font-family: inherit;
+            color: #17C3B2;
+            cursor: pointer;
+            border-radius: 8px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: none;
+        }
+        
+        .calculator-buttons button:active {
+            background-color: transparent;
+            transform: none;
+        }
+
+        #userInput {
+            font-size: 32px;
+            width: 260px;
+            height: 70px;
+            text-align: center;
+            margin: 20px auto;
+            display: block;
+            border: 2px solid #17C3B2;
+            border-radius: 8px;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        
+        #endGame button, #backButton {
+            padding: 12px 24px;
+            border: 2px solid #17C3B2;
+            background-color: transparent;
+            font-size: 16px;
+            font-family: inherit;
+            color: #17C3B2;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 5px;
+            transition: none;
+        }
+
+        .zero-button {
+            grid-column: 2 / 3;
+        }
+        
+        .level-buttons {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .level-buttons button {
+            padding: 12px 24px;
+            border: 2px solid #17C3B2;
+            background-color: #17C3B2;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            min-width: 80px;
+        }
+        
+        #prompt {
+            font-size: 20px;
+            margin: 15px 0;
+        }
+        
+        #score, #result, #speedStats {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        
+        #speedStats {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        
+        h1 {
+            color: #17C3B2;
+        }
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="levelSelection">
+        <h1>🎮 Flash Memory Game 29</h1>
+        <h3>اختر مستوى الصعوبة</h3>
+        <div class="level-buttons">
+            <button onclick="startGame(3)">Level 3</button>
+            <button onclick="startGame(4)">Level 4</button>
+            <button onclick="startGame(5)">Level 5</button>
+            <button onclick="startGame(6)">Level 6</button>
+            <button onclick="startGame(7)">Level 7</button>
+            <button onclick="startGame(8)">Level 8</button>
+            <button onclick="startGame(9)">Level 9</button>
+        </div>
+        <p style="margin-top: 20px; color: #666;">⏱️ كل مستوى = عدد أرقام +1 | مدة اللعبة 60 ثانية</p>
+    </div>
+
+    <div id="game">
+        <input type="text" id="userInput" class="hidden" readonly>
+        <div class="calculator-buttons hidden" id="calcButtons">
+            <button data-num="1">1</button>
+            <button data-num="2">2</button>
+            <button data-num="3">3</button>
+            <button data-num="4">4</button>
+            <button data-num="5">5</button>
+            <button data-num="6">6</button>
+            <button data-num="7">7</button>
+            <button data-num="8">8</button>
+            <button data-num="9">9</button>
+            <button class="zero-button" data-num="0">0</button>
+        </div>
+        <p id="prompt" class="hidden"></p>
+        <p id="result"></p>
+        <p id="score"></p>
+        <div id="speedStats">
+            ⚡ سرعة الاستجابة:<br>
+            آخر ضغطة: -- ms | المتوسط: -- ms
+        </div>
+        <button id="backButton" onclick="goToLevelSelection()">🔙 Back to Level Selection</button>
+    </div>
+
+    <div id="endGame">
+        <h2>🏁 انتهت اللعبة</h2>
+        <p id="endMessage"></p>
+        <button onclick="restartGame()">🔄 Restart Game</button>
+        <button onclick="goToLevelSelection()">🎮 Select Another Level</button>
+    </div>
+
+    <script>
+        let numberToRemember, level, score, gameStartTime, gameInterval;
+        let canInput = true;
+        
+        // متغيرات السرعة
+        let lastPressTime = 0;
+        let pressTimes = []; // تخزين أوقات الاستجابة
+        let currentDigitIndex = 0; // الرقم الحالي في السلسلة
+        
+        function startGame(selectedLevel) {
+            level = selectedLevel;
+            resetGame();
+            showNumber();
+            gameInterval = setInterval(updateGameTime, 100);
+        }
+
+        function resetGame() {
+            score = 0;
+            gameStartTime = Date.now();
+            canInput = true;
+            
+            // إعادة ضبط متغيرات السرعة
+            lastPressTime = 0;
+            pressTimes = [];
+            currentDigitIndex = 0;
+            updateSpeedDisplay(0, 0);
+            
+            toggleVisibility("levelSelection", false);
+            toggleVisibility("game", true);
+            toggleVisibility("endGame", false);
+            updateScoreDisplay();
+        }
+
+        function toggleVisibility(elementId, isVisible) {
+            document.getElementById(elementId).style.display = isVisible ? "block" : "none";
+        }
+
+        function showNumber() {
+            canInput = true;
+            currentDigitIndex = 0; // أول رقم في السلسلة الجديدة
+            numberToRemember = generateRandomNumber();
+            displayNumberInInput();
+            setTimeout(hideNumberInInput, 500);
+        }
+
+        function generateRandomNumber() {
+            const digits = level + 1;
+            return Math.floor(Math.pow(10, digits - 1) + Math.random() * (Math.pow(10, digits) - Math.pow(10, digits - 1)));
+        }
+
+        function displayNumberInInput() {
+            const userInput = document.getElementById("userInput");
+            userInput.value = numberToRemember;
+            userInput.style.color = "#17C3B2";
+        }
+
+        function hideNumberInInput() {
+            const userInput = document.getElementById("userInput");
+            userInput.value = "";
+            toggleVisibility("prompt", true);
+            toggleVisibility("userInput", true);
+            toggleVisibility("calculator-buttons", true);
+            
+            // بدء توقيت أول ضغطة
+            lastPressTime = Date.now();
+        }
+
+        function appendNumber(num) {
+            if (!canInput) return;
+            
+            const now = Date.now();
+            
+            // حساب سرعة الاستجابة (بين الضغطات)
+            if (lastPressTime > 0 && currentDigitIndex > 0) {
+                const responseTime = now - lastPressTime;
+                pressTimes.push(responseTime);
+                
+                // حساب المتوسط
+                const avgTime = pressTimes.reduce((a, b) => a + b, 0) / pressTimes.length;
+                updateSpeedDisplay(responseTime, avgTime);
+            }
+            
+            // تحديث آخر وقت ضغطة
+            lastPressTime = now;
+            currentDigitIndex++;
+            
+            const userInput = document.getElementById("userInput");
+            userInput.value += num;
+            
+            if (userInput.value.length === numberToRemember.toString().length) {
+                checkAnswer();
+            }
+        }
+
+        function updateSpeedDisplay(lastTime, avgTime) {
+            const speedDiv = document.getElementById("speedStats");
+            if (speedDiv) {
+                speedDiv.innerHTML = `⚡ سرعة الاستجابة:<br>
+                    آخر ضغطة: ${lastTime.toFixed(0)} ms | 
+                    المتوسط: ${avgTime.toFixed(0)} ms<br>
+                    (${(1000 / avgTime).toFixed(1)} ضغطة/ثانية)`;
+            }
+        }
+
+        function checkAnswer() {
+            canInput = false;
+            
+            const userInput = document.getElementById("userInput");
+            const userAnswer = userInput.value;
+            if (userAnswer == numberToRemember) {
+                userInput.style.color = "green";
+                score++;
+                updateScoreDisplay();
+            } else {
+                userInput.style.color = "red";
+            }
+            
+            setTimeout(() => {
+                userInput.style.color = "";
+                userInput.value = "";
+                showNumber();
+            }, 150);
+        }
+        
+        function updateScoreDisplay() {
+            document.getElementById("score").innerHTML = `✅ النقاط: ${score}`;
+        }
+
+        function updateGameTime() {
+            const elapsed = (Date.now() - gameStartTime) / 1000;
+            const remaining = Math.max(0, 60 - Math.floor(elapsed));
+            document.getElementById("result").innerHTML = `⏱️ الوقت المتبقي: ${remaining} ثانية`;
+            if (elapsed >= 60) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            
+            // حساب متوسط السرعة النهائي
+            let avgSpeedText = "";
+            if (pressTimes.length > 0) {
+                const finalAvg = pressTimes.reduce((a, b) => a + b, 0) / pressTimes.length;
+                avgSpeedText = `\n⚡ متوسط سرعة استجابتك: ${finalAvg.toFixed(0)} مللي ثانية (${(1000 / finalAvg).toFixed(1)} ضغطة/ثانية)`;
+            }
+            
+            document.getElementById('endMessage').innerHTML = `🎉 انتهت اللعبة! 🎉\nالإجابات الصحيحة: ${score} من أصل محاولات${avgSpeedText}`;
+            toggleVisibility("game", false);
+            toggleVisibility("endGame", true);
+        }
+
+        function restartGame() {
+            startGame(level);
+        }
+
+        function goToLevelSelection() {
+            clearInterval(gameInterval);
+            toggleVisibility("game", false);
+            toggleVisibility("endGame", false);
+            toggleVisibility("levelSelection", true);
+        }
+
+        window.onload = function() {
+            toggleVisibility("levelSelection", true);
+            
+            // ربط الأزرار بـ touchstart (استجابة فورية)
+            const buttons = document.querySelectorAll('.calculator-buttons button');
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    const num = parseInt(this.getAttribute('data-num'));
+                    appendNumber(num);
+                });
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const num = parseInt(this.getAttribute('data-num'));
+                    appendNumber(num);
+                });
+            });
+        };
+        
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            const swCode = `const CACHE_NAME='flash-memory-v1';const urlsToCache=['/','/index.html'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(urlsToCache)))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});`;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
+        }
+        
+        // Manifest
+        const manifestObj = {name:"Flash Memory Game",short_name:"Memory Game",start_url:".",display:"standalone",background_color:"#ffffff",theme_color:"#17C3B2",icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2317C3B2'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white'%3EMG%3C/text%3E%3C/svg%3E",sizes:"any",type:"image/svg+xml"}]};
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = URL.createObjectURL(new Blob([JSON.stringify(manifestObj)], {type:'application/json'}));
+        document.head.appendChild(manifestLink);
+        
+        // منع التكبير
+        document.addEventListener('touchstart', e => { if(e.touches.length > 1) e.preventDefault(); }, { passive: false });
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', e => { const now = Date.now(); if(now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now; }, false);
+    </script>
+</body>
+</html>
